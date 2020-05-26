@@ -1,0 +1,236 @@
+<template>
+    <div>
+      <header class="slds-modal__header">
+        <!-- <button
+          class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+          title="Close"
+          onclick={closeModal}
+        >
+          <lightning-icon
+            icon-name="utility:close"
+            alternative-text="close"
+            variant="inverse"
+            size="small"
+          ></lightning-icon>
+          <span class="slds-assistive-text">Close</span>
+        </button>-->
+        <div style="display: flex; justify-content: space-between;">
+          <div></div>
+  
+          <div>
+            <h2
+              id="modal-heading-01"
+              class="slds-text-heading_medium slds-hyphenate"
+            >
+              Create Cases
+            </h2>
+          </div>
+          <div>
+            <lightning-icon
+              icon-name="action:refresh"
+              alternative-text="Approved"
+              size="xx-small"
+              title="Refresh component"
+              onclick={refreshComponent}
+            ></lightning-icon>
+          </div>
+        </div>
+      </header>
+  
+      <div
+        class="slds-modal__content slds-p-around_medium"
+        id="modal-content-id-1"
+      >
+        <div if:false={finished}>
+          <div class="demo-only" style="height: 4rem;">
+            <div class="slds-notify_container slds-is-relative">
+              <div
+                class="slds-notify slds-notify_toast slds-theme_success"
+                style="min-width: 10em;"
+                role="status"
+              >
+                <span class="slds-assistive-text">success</span>
+                <span
+                  class="slds-icon_container slds-icon-utility-success slds-m-right_small slds-no-flex slds-align-top"
+                  title="Description of icon when needed"
+                >
+                  <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                    <use
+                      xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#success"
+                    ></use>
+                  </svg>
+                </span>
+                <div class="slds-notify__content">
+                  <h2 class="slds-text-heading_small">
+                    <a href="javascript:void(0);"
+                      >{finalListCount} Cases created successfully!!</a
+                    >
+                  </h2>
+                </div>
+                <div class="slds-notify__close">
+                  <button
+                    class="slds-button slds-button_icon slds-button_icon-inverse"
+                    title="Close"
+                  >
+                    <svg
+                      class="slds-button__icon slds-button__icon_large"
+                      aria-hidden="true"
+                    >
+                      <use
+                        xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#close"
+                      ></use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ul class="slds-has-dividers_bottom-space">
+            <template if:true={finalCases}>
+              <template for:each={finalCases} for:item="fin">
+                <li class="slds-item" key={fin.Id}>
+                  Case Number :
+                  <a href="#" data-record-id={fin.Id} onclick={navigateToRecord}>
+                    {fin.CaseNumber}</a
+                  >
+                </li>
+              </template>
+            </template>
+          </ul>
+        </div>
+        <div if:true={finished}>
+          <span>What are you calling out today?</span>
+          <div style="margin: 10px 0px 10px 0;">
+            <template if:true={TypePicklistValues.data}>
+              <lightning-combobox
+                name="type"
+                label="Type"
+                required
+                placeholder="Case Type"
+                options={TypePicklistValues.data.values}
+                value={type}
+                onchange={handleChange}
+              ></lightning-combobox>
+            </template>
+          </div>
+          <div style="margin: 10px 0px 10px 0;">
+            <lightning-input
+              type="text"
+              name="subject"
+              required
+              label="Subject"
+              placeholder="Subject"
+              value={subject}
+              onchange={handleChange}
+            ></lightning-input>
+          </div>
+          <div style="margin: 10px 0px 10px 0;">
+            <lightning-input
+              type="text"
+              name="description"
+              required
+              label="Call Details"
+              placeholder="Description"
+              value={description}
+              onchange={handleChange}
+            ></lightning-input>
+          </div>
+          <div style="margin: 15px 0px 15px 0;">
+            <lightning-radio-group
+              label="Owner"
+              name="ownerType"
+              required
+              options={options}
+              value={ownerType}
+              type="button"
+              onchange={handleChange}>
+            </lightning-radio-group>
+            <c-lwc-custom-lookup 
+              object-name={ownerType}
+              object-label={lookupLabel}
+              field-name="Name" 
+              select-record-id={selectRecordId}                
+              select-record-name={selectRecordName} 
+              icon-name={lookupIcon}
+              clear-icon-flag = "true"
+              icon-flag="false"
+              input-read-only="true"
+              onselected={handleLookupSelect}
+              onreset={handleLookupReset}>
+            </c-lwc-custom-lookup>
+          </div>
+          <div style="margin: 15px 0px 15px 0;">
+            <lightning-input
+              type="checkbox"
+              label="Child case to Master Case?"
+              name="masterId"
+              value={parentId}
+              checked="checked"
+              class="cb"
+              onchange={handleChange}
+            ></lightning-input>
+          </div>
+          <!-- Modal/Popup Box LWC footer starts here -->
+          <footer class="slds-modal__footer">
+            <template if:false={finishDisabled}>
+              <button
+                class="slds-button slds-button_brand"
+                onclick={insertRecords}
+                title="Finish"
+                style="float: left;"
+              >
+                Finish
+              </button>
+            </template>
+            <template if:true={finishDisabled}>
+              <button
+                class="slds-button slds-button_brand"
+                title="Finish"
+                disabled
+                style="float: left;"
+              >
+                Finish
+              </button>
+            </template>
+            <template if:false={disabled}>
+              <button
+                class="slds-button slds-button_neutral"
+                onclick={handlePrevious}
+                title="Previous"
+              >
+                Previous
+              </button>
+            </template>
+            <template if:true={disabled}>
+              <button
+                class="slds-button slds-button_neutral"
+                disabled
+                title="Previous"
+              >
+                Previous
+              </button>
+            </template>
+            <template if:false={nextDisabled}>
+              <button
+                class="slds-button slds-button_neutral"
+                title="Next"
+                onclick={handleNext}
+              >
+                Next
+              </button>
+            </template>
+            <template if:true={nextDisabled}>
+              <button
+                class="slds-button slds-button_neutral"
+                title="Next"
+                disabled
+              >
+                Next
+              </button>
+            </template>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </template>
