@@ -33,7 +33,11 @@ export default class CreateMultipleCases extends NavigationMixin(
   @track selectRecordId= this.userId;
   @track selectRecordName="";
   @track lookupLabel = "User";
-  @track lookupIcon = "standard:user"
+  @track lookupIcon = "standard:user";
+  @track selectedPrevQueueName = "";
+  @track selectedPrevUserName ="";
+  @track selectedPrevUserId ="";
+  @track selectedPrevQueueId = "";
 
 
   counter = 0;
@@ -57,7 +61,7 @@ export default class CreateMultipleCases extends NavigationMixin(
         this.error = error ; 
       } else if (data) {
         this.userName = data.fields.Name.value;
-        this.selectRecordName = data.fields.Name.value;
+        this.setDefaultOwnerData();
       }
     }
 
@@ -136,13 +140,16 @@ export default class CreateMultipleCases extends NavigationMixin(
       this.updateField("masterId", event.target.checked);
     } else if (field === "ownerType") {
       this.ownerType = event.target.value;
-      this.template.querySelector("c-lwc-custom-lookup").resetData();
+      var skip = true;
+      this.template.querySelector("c-lwc-custom-lookup").resetData(event,skip);
       if(this.ownerType==="user"){
         this.lookupLabel = "User";
         this.lookupIcon = "standard:user"
+        this.getPrevOwnerData();
       } else {
         this.lookupLabel = "Queue";
         this.lookupIcon = "standard:queue"
+        this.getPrevOwnerData();
       }
       this.updateField("ownerType", event.target.value);
     }
@@ -153,6 +160,7 @@ export default class CreateMultipleCases extends NavigationMixin(
     this.updateField("ownerId", this.selectRecordId);
     this.selectRecordName = event.detail.selectName;
     this.updateField("ownerName", this.selectRecordName);
+    this.setPrevOwnerData();
   }
 
   handleLookupReset(event){
@@ -160,6 +168,44 @@ export default class CreateMultipleCases extends NavigationMixin(
     this.updateField("ownerId", this.selectRecordId);
     this.selectRecordName = "";
     this.updateField("ownerName", this.selectRecordName);
+    if(event.detail){
+      this.setPrevOwnerData();
+    }
+  }
+
+  getPrevOwnerData(){
+    if(this.ownerType=="user" && this.selectedPrevUserId!="" && this.selectedPrevUserName!=""){
+      this.selectRecordId = this.selectedPrevUserId;
+      this.selectRecordName = this.selectedPrevUserName;
+      this.template.querySelector("c-lwc-custom-lookup").setExplicitSelectedRecord();
+    }
+    if(this.ownerType=="group" && this.selectedPrevQueueId!="" && this.selectedPrevQueueName!=""){
+      this.selectRecordId = this.selectedPrevQueueId;
+      this.selectRecordName = this.selectedPrevQueueName;
+      this.template.querySelector("c-lwc-custom-lookup").setExplicitSelectedRecord();
+    }
+  }
+
+  setPrevOwnerData(){
+    if(this.ownerType=="user"){
+      this.selectedPrevUserId = this.selectRecordId;
+      this.selectedPrevUserName = this.selectRecordName;
+    }
+    if(this.ownerType=="group"){
+      this.selectedPrevQueueId = this.selectRecordId;
+      this.selectedPrevQueueName = this.selectRecordName;
+    }
+  }
+
+  setDefaultOwnerData(){
+    this.ownerType = "user";
+    this.selectRecordId=this.userId;
+    this.selectRecordName=this.userName;
+    this.selectedPrevUserId = "";
+    this.selectedPrevUserName = "";
+    this.selectedPrevQueueId = "";
+    this.selectedPrevQueueName = "";
+    this.setPrevOwnerData();
   }
 
   updateField(field, value) {
@@ -187,9 +233,7 @@ export default class CreateMultipleCases extends NavigationMixin(
     this.subject = "";
     this.description = "";
     this.type = "";
-    this.ownerType = "user";
-    this.selectRecordId=this.userId;
-    this.selectRecordName=this.userName;
+    this.setDefaultOwnerData();
     this.template.querySelector("lightning-input.cb").checked = false;
     this.parentId = false;
     this.finished = true;
@@ -210,6 +254,7 @@ export default class CreateMultipleCases extends NavigationMixin(
       this.selectRecordId = this.cases[count].OwnerId;
       this.selectRecordName = this.cases[count].OwnerName;
       this.ownerType = this.cases[count].OwnerType;
+      this.setPrevOwnerData();
       if (this.cases[count].ParentId !== null) {
         this.template.querySelector("lightning-input.cb").checked = true;
       } else {
@@ -219,9 +264,7 @@ export default class CreateMultipleCases extends NavigationMixin(
       this.subject = "";
       this.description = "";
       this.type = "";
-      this.ownerType = "user";
-      this.selectRecordId=this.userId;
-      this.selectRecordName=this.userName;
+      this.setDefaultOwnerData();
       this.template.querySelector("lightning-input.cb").checked = true;
       this.counter++;
       this.currentIndex = -1;
@@ -241,9 +284,7 @@ export default class CreateMultipleCases extends NavigationMixin(
       this.subject = "";
       this.description = "";
       this.type = "";
-      this.ownerType = "user";
-      this.selectRecordId = this.userId;
-      this.selectRecordName = this.userName;
+      this.setDefaultOwnerData();
       this.parentId = false;
       this.template.querySelector("lightning-input.cb").checked = true;
       this.counter++;
@@ -261,6 +302,7 @@ export default class CreateMultipleCases extends NavigationMixin(
       this.selectRecordId = this.cases[count].OwnerId;
       this.selectRecordName = this.cases[count].OwnerName;
       this.ownerType = this.cases[count].OwnerType;
+      this.setPrevOwnerData();
       if (this.cases[count].ParentId !== null) {
         this.template.querySelector("lightning-input.cb").checked = true;
       } else {

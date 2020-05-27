@@ -65,14 +65,20 @@ export default class LwcCustomLookup extends LightningElement {
         this.dispatchEvent(selectedEvent);
     }
     
-    @api resetData(event) {
+    @api resetData(event,skip) {
         this.selectRecordName = "";
         this.selectRecordId = "";
         this.inputReadOnly = false;
         this.iconFlag = true;
         this.clearIconFlag = false;
-        const resetEvent = new CustomEvent('reset');
+        const resetEvent = new CustomEvent('reset',{detail:skip});
         this.dispatchEvent(resetEvent);
     }
 
+    @api setExplicitSelectedRecord(){
+        this.txtclassname =  'slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click';
+        this.iconFlag = false;
+        this.clearIconFlag = true;
+        this.inputReadOnly = true;
+    }
 }
