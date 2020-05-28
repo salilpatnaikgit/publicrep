@@ -20,7 +20,6 @@ export default class CreateMultipleCases extends NavigationMixin(
         { label: 'Queue', value: 'group' }
     ];
   }
-
   @track userId = USER_ID;
   @track userName;
   value = "inProgress";
@@ -101,23 +100,25 @@ export default class CreateMultipleCases extends NavigationMixin(
     createCases({ caseRecords: this.cases, recordId: this.recordId })
       .then((result) => {
         this.finished = false;
-
         this.finalCases = result;
         this.cases = [];
+        this.setDefaultFieldValues();
         this.counter = 0;
-        this.subject = "";
-        this.description = "";
-        this.type = "";
-        this.template.querySelector("lightning-input.cb").checked = false;
-        this.ownerType = "user"
-        this.selectRecordId=this.userId;
-        this.selectRecordName=this.userName;
         console.log(this.finalCases);
       })
       .catch((error) => {
         console.log(error);
         //this.error = error;
       });
+  }
+
+  setDefaultFieldValues(){
+    this.subject = "";
+    this.description = "";
+    this.type = "";
+    this.template.querySelector("lightning-input.cb").checked = true;
+    this.parentId = true;
+    this.setDefaultOwnerData();
   }
 
   onChecboxChange(event) {
@@ -155,6 +156,27 @@ export default class CreateMultipleCases extends NavigationMixin(
     }
   }
 
+  updateField(field, value) {
+    if (this.currentIndex != -1) {
+      if (field === "subject") {
+        this.cases[this.currentIndex].Subject = value;
+      } else if (field === "description") {
+        this.cases[this.currentIndex].Description = value;
+      } else if (field === "type") {
+        this.cases[this.currentIndex].Type = value;
+      } else if (field === "ownerId") {
+        this.cases[this.currentIndex].OwnerId = value;
+      } else if (field === "ownerName") {
+        this.cases[this.currentIndex].OwnerName_Var = value;
+      } else if (field === "ownerType") {
+        this.cases[this.currentIndex].OwnerType_Var = value;
+      } else if (field === "masterId") {
+        let rId = value === true ? this.recordId : null;
+        this.cases[this.currentIndex].ParentId = rId;
+      }
+    }
+  }
+
   handleLookupSelect(event){
     this.selectRecordId = event.detail.currentRecId;
     this.updateField("ownerId", this.selectRecordId);
@@ -168,7 +190,7 @@ export default class CreateMultipleCases extends NavigationMixin(
     this.updateField("ownerId", this.selectRecordId);
     this.selectRecordName = "";
     this.updateField("ownerName", this.selectRecordName);
-    if(event.detail){
+    if(!event.detail){
       this.setPrevOwnerData();
     }
   }
@@ -177,11 +199,15 @@ export default class CreateMultipleCases extends NavigationMixin(
     if(this.ownerType=="user" && this.selectedPrevUserId!="" && this.selectedPrevUserName!=""){
       this.selectRecordId = this.selectedPrevUserId;
       this.selectRecordName = this.selectedPrevUserName;
+      this.updateField("ownerId", this.selectRecordId);
+      this.updateField("ownerName", this.selectRecordName);
       this.template.querySelector("c-lwc-custom-lookup").setExplicitSelectedRecord();
     }
     if(this.ownerType=="group" && this.selectedPrevQueueId!="" && this.selectedPrevQueueName!=""){
       this.selectRecordId = this.selectedPrevQueueId;
       this.selectRecordName = this.selectedPrevQueueName;
+      this.updateField("ownerId", this.selectRecordId);
+      this.updateField("ownerName", this.selectRecordName);
       this.template.querySelector("c-lwc-custom-lookup").setExplicitSelectedRecord();
     }
   }
@@ -201,41 +227,19 @@ export default class CreateMultipleCases extends NavigationMixin(
     this.ownerType = "user";
     this.selectRecordId=this.userId;
     this.selectRecordName=this.userName;
+    this.resetPrevOwnersData();
+    this.setPrevOwnerData();
+  }
+
+  resetPrevOwnersData(){
     this.selectedPrevUserId = "";
     this.selectedPrevUserName = "";
     this.selectedPrevQueueId = "";
     this.selectedPrevQueueName = "";
-    this.setPrevOwnerData();
-  }
-
-  updateField(field, value) {
-    if (this.currentIndex != -1) {
-      if (field === "subject") {
-        this.cases[this.currentIndex].Subject = value;
-      } else if (field === "description") {
-        this.cases[this.currentIndex].Description = value;
-      } else if (field === "type") {
-        this.cases[this.currentIndex].Type = value;
-      } else if (field === "ownerId") {
-        this.cases[this.currentIndex].OwnerId = value;
-      } else if (field === "ownerName") {
-        this.cases[this.currentIndex].OwnerName = value;
-      } else if (field === "ownerType") {
-        this.cases[this.currentIndex].OwnerType = value;
-      } else if (field === "masterId") {
-        let rId = value === true ? this.recordId : null;
-        this.cases[this.currentIndex].ParentId = rId;
-      }
-    }
   }
 
   refreshComponent(event) {
-    this.subject = "";
-    this.description = "";
-    this.type = "";
-    this.setDefaultOwnerData();
-    this.template.querySelector("lightning-input.cb").checked = false;
-    this.parentId = false;
+    this.setDefaultFieldValues();
     this.finished = true;
     this.disable = true;
     this.counter = 0;
@@ -252,8 +256,9 @@ export default class CreateMultipleCases extends NavigationMixin(
       this.description = this.cases[count].Description;
       this.type = this.cases[count].Type;
       this.selectRecordId = this.cases[count].OwnerId;
-      this.selectRecordName = this.cases[count].OwnerName;
-      this.ownerType = this.cases[count].OwnerType;
+      this.selectRecordName = this.cases[count].OwnerName_Var;
+      this.ownerType = this.cases[count].OwnerType_Var;
+      this.resetPrevOwnersData();
       this.setPrevOwnerData();
       if (this.cases[count].ParentId !== null) {
         this.template.querySelector("lightning-input.cb").checked = true;
@@ -261,14 +266,9 @@ export default class CreateMultipleCases extends NavigationMixin(
         this.template.querySelector("lightning-input.cb").checked = false;
       }
     } else if (this.counter === this.cases.length - 1) {
-      this.subject = "";
-      this.description = "";
-      this.type = "";
-      this.setDefaultOwnerData();
-      this.template.querySelector("lightning-input.cb").checked = true;
+      this.setDefaultFieldValues();
       this.counter++;
       this.currentIndex = -1;
-      this.parentId = false;
     } else {
       let rId = this.parentId === true ? this.recordId : null;
       this.case = {
@@ -276,17 +276,12 @@ export default class CreateMultipleCases extends NavigationMixin(
         Description: this.description,
         Type: this.type,
         OwnerId: this.selectRecordId,
-        OwnerName: this.selectRecordName,
-        OwnerType: this.ownerType,
+        OwnerName_Var: this.selectRecordName,
+        OwnerType_Var: this.ownerType,
         ParentId: rId
       };
       this.cases.push(this.case);
-      this.subject = "";
-      this.description = "";
-      this.type = "";
-      this.setDefaultOwnerData();
-      this.parentId = false;
-      this.template.querySelector("lightning-input.cb").checked = true;
+      this.setDefaultFieldValues();
       this.counter++;
       this.currentIndex = -1;
     }
@@ -300,8 +295,9 @@ export default class CreateMultipleCases extends NavigationMixin(
       this.description = this.cases[count].Description;
       this.type = this.cases[count].Type;
       this.selectRecordId = this.cases[count].OwnerId;
-      this.selectRecordName = this.cases[count].OwnerName;
-      this.ownerType = this.cases[count].OwnerType;
+      this.selectRecordName = this.cases[count].OwnerName_Var;
+      this.ownerType = this.cases[count].OwnerType_Var;
+      this.resetPrevOwnersData();
       this.setPrevOwnerData();
       if (this.cases[count].ParentId !== null) {
         this.template.querySelector("lightning-input.cb").checked = true;
